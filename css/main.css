@@ -1,0 +1,41 @@
+body{
+	background-color: White;
+}
+input{
+	font-size: 20pt;
+}
+table#action{
+	font-size: 20pt;
+	border-style: double;
+	border-width: 3px;
+	border-color: red;
+}
+#container{
+	width: 1000px;
+	margin-left: auto;
+	margin-right: auto;
+}
+output { 
+	display:none;
+	position: absolute;
+	text-align: center; 
+	color: white; 
+	padding:10px 10px 10px 10px;
+	background-color:#DCDCDC;
+	border-radius: 10px; 
+	bottom: 100%;
+	left: 30px;
+}
+output:after { 
+    content: "";
+    position: absolute;
+    border-top: 10px solid #999999;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    top: 100%;
+    margin-left: -5px;
+    margin-top: -1px;
+}
+#bubble{
+	position: relative;
+}

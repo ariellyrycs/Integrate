@@ -32,7 +32,3 @@ function onlyletters(id){
 		id.value = id.value.match('[a-zA-Z]','');
 	}
 }
-
-(function(){
-
-}());

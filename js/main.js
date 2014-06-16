@@ -1,17 +1,17 @@
-var inputpreview= function() {
-	var tex = AMTparseExpr(document.getElementById("eq").value.replace(/^\s+/g,""),false)[0];
-	var previewElement = document.getElementById('preview');
-	var output=document.getElementById("trybubble");
-	if(tex){
-		output.style.display="inline-block";
-    	previewElement.setAttribute('src', 'http://www.imathas.com/cgi-bin/mimetex.cgi?'+tex);
-    }else{
-    	output.style.display="none";
-    	previewElement.removeAttribute("src");
-    } 
+var inputpreview = function () {
+    "use strict";
+    var tex = AMTparseExpr(document.getElementById("eq").value.replace(/^\s+/g, ""), false)[0],
+        previewElement = document.getElementById('preview'),
+        output = document.getElementById("trybubble");
+    if (tex) {
+        output.style.display = "inline-block";
+        previewElement.setAttribute('src', 'http://www.imathas.com/cgi-bin/mimetex.cgi?' + tex);
+    } else {
+        output.style.display = "none";
+        previewElement.removeAttribute("src");
+    }
 }
-
-function checksubmit(){
+function checksubmit (){
 
 	var tryeq = document.getElementById("eq").value;
 	var variable = document.getElementById("variable").value;

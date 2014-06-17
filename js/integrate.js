@@ -145,11 +145,14 @@ function integrate(func, variable, from, to) {
                     createParentheses = function (a, b) {
                         return '(' + a + '/' + b + ')';
                     },
-                    /**
-                     * @return {string}
-                     */
-                    createParentheses1 = function (varLeft, currentlyPos, nextPos) {
-                        return '(' + varLeft + '/' + nextPos + ')';
+                    unpackArray = function (array) {
+                        var string;
+                        if (typeof array === 'string') {
+                            string = array;
+                        } else {
+                            string = unpackArray(array[0]);
+                        }
+                        return string;
                     },
                     separateBySlash = function (equation, i) {
 
@@ -157,30 +160,63 @@ function integrate(func, variable, from, to) {
                             exponential = detectExponentials(equation[0][i]) || 0,
                             divisionWithParentheses = '',
                             condition1 = equation[0][i].charAt(indexSlash + 1) === '', //end of statement after the slash sign
-                            condition2 = !!indexSlash, //statement before slash sign
-                            varLeft,
-                            arrayParenthesis;
-                        //detectExponentials(equation[0][i]);
-
+                            condition2 = !indexSlash, //statement before slash sign
+                            condition_1 = !equation[0][i].slice(0, indexSlash - 1),// (characters between de first character and the slash) === 0
+                            condition_2 = !equation[0][i].slice(indexSlash + 2);// (characters between de slash and the next sentence) === 0
                         //case 1 (a*a)/(a*a)
                         if (condition1 && condition2) {
-                            divisionWithParentheses = createParentheses(equation[0][i - 1], equation[0][i + 1]);
-                            equation[0].slice(i - 1, i + 1, divisionWithParentheses);
-                            equation[1].slice(i - 1, i + 1, true);
+                            divisionWithParentheses = createParentheses(unpackArray(equation[0][i - 1]), unpackArray(equation[0][i + 1]));
+                            equation[0].splice(i - 1, 3, divisionWithParentheses);
+                            equation[1].splice(i - 1, 3, true);
+
                         //case 2 (a*a)/a(a*a)
                         } else if (!condition1 && condition2) {
+                            divisionWithParentheses = createParentheses(unpackArray(equation[0][i - 1]), equation[0][i].charAt(indexSlash + 1));
+
+                            //case 1: (b*b)/b(b)
+                            if (condition_2) {
+                                equation[0].splice(i - 1, 2, divisionWithParentheses);
+                                equation[1].splice(i - 1, 2, true);
+                            //case 1: (b*b)/bb(b)
+                            } else {
+                                equation[0].splice(i - 1, 2, divisionWithParentheses, equation[0][i].slice(2));
+                                equation[1].splice(i - 1, 2, true, false);
+                            }
 
                         //case 3 (a*a)a/(a*a)
                         } else if (condition1 && !condition2) {
-                            varLeft = indexSlash - 1;
-                            divisionWithParentheses = createParentheses1(ecuation[0][i].charAt(varLeft), equation[0][i], equation[0][i + 1]);
+                            divisionWithParentheses = createParentheses(equation[0][i].charAt(indexSlash - 1), unpackArray(equation[0][i + 1]));
 
-                            arrayParenthesis = createParentheses(equation[0][i]);
-                            equation[0][i] = equation[0][i - 1] + '/' + arrayParenthesis[0] + ')';
-
+                            //case 1: (b*b)b/(b*b)
+                            if (condition_1) {
+                                equation[0].splice(i, 2, divisionWithParentheses);
+                                equation[1].splice(i, 2, true);
+                            //case 2: (b*b)bb/(b*b)
+                            } else {
+                                equation[0].splice(i, 2, equation[0][i].slice(0, indexSlash - 1), divisionWithParentheses);
+                                equation[1].splice(i, 2, false, true);
+                            }
                         //case 2 (a*a)a/a(a*a)
                         } else if (!condition1 && !condition2) {
+                            divisionWithParentheses = createParentheses(equation[0][i].charAt(indexSlash - 1), equation[0][i].charAt(indexSlash + 1));
 
+                            //case 1: (b*b)b/b(b*b)
+                            if (condition_1 && condition_2) {
+                                equation[0].splice(i, 1, divisionWithParentheses);
+                                equation[1].splice(i, 1, true);
+                            //case 2: (b*b)bb/b(b*b)
+                            } else if (!condition_1 && condition_2) {
+                                equation[0].splice(i, 1, equation[0][i].slice(0, indexSlash - 1), divisionWithParentheses);
+                                equation[1].splice(i, 1, false, true);
+                            //case 3: (b*b)b/bb(b*b)
+                            } else if (condition_1 && !condition_2) {
+                                equation[0].splice(i, 1, divisionWithParentheses, equation[0][i].slice(indexSlash + 2));
+                                equation[1].splice(i, 1, true, false);
+                            //case 4: (b*b)bb/bb(b*b)
+                            } else if (!condition_1 && !condition_2) {
+                                equation[0].splice(i, 1, equation[0][i].slice(0, indexSlash - 1), divisionWithParentheses, equation[0][i].slice(indexSlash + 2));
+                                equation[1].splice(i, 1, false, true, false);
+                            }
                         }
                         return equation;
                     };

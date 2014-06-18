@@ -24,7 +24,7 @@ function integrate(func, variable, from, to) {
             /**
              * @return {string}
              */
-            detectExponentials = function (string) {
+            findExponents = function (string) {
                 if (/^(\^)((\-|\+)*?[0-9])/g.test(string)) {
                     var arrayString = string.split(''),
                         concatString = '',
@@ -38,7 +38,7 @@ function integrate(func, variable, from, to) {
                     }
                     return concatString;
                 }
-                return null;
+                return false;
             },
             /**
              * @return {boolean}
@@ -154,47 +154,57 @@ function integrate(func, variable, from, to) {
                         }
                         return string;
                     },
+                    spliceMe = function () {
+                        var i;
+                        for (i in this) {
+                            if (this.hasOwnProperty(i)) {
+                                Array.prototype.splice.apply(this[i], arguments[i]);
+                            }
+                        }
+                        return this;
+                    },
                     separateBySlash = function (equation, i) {
 
                         var indexSlash = equation[0][i].indexOf('/'),
-                            exponential = detectExponentials(equation[0][i]) || 0,
+                            exponential = findExponents(equation[0][i]) || 0,
                             divisionWithParentheses = '',
                             condition1 = equation[0][i].charAt(indexSlash + 1) === '', //end of statement after the slash sign
                             condition2 = !indexSlash, //statement before slash sign
                             condition_1 = !equation[0][i].slice(0, indexSlash - 1),// (characters between de first character and the slash) === 0
-                            condition_2 = !equation[0][i].slice(indexSlash + 2);// (characters between de slash and the next sentence) === 0
+                            condition_2 = !equation[0][i].slice(indexSlash + 2),// (characters between de slash and the next sentence) === 0
+                            spliceFormula,
+                            spliceBoolean;
+                        // spliceMe
                         //case 1 (a*a)/(a*a)
                         if (condition1 && condition2) {
                             divisionWithParentheses = createParentheses(unpackArray(equation[0][i - 1]), unpackArray(equation[0][i + 1]));
-                            equation[0].splice(i - 1, 3, divisionWithParentheses);
-                            equation[1].splice(i - 1, 3, true);
-
+                            spliceFormula = [i - 1, 3, divisionWithParentheses];
+                            spliceBoolean = [i - 1, 3, true];
                         //case 2 (a*a)/a(a*a)
                         } else if (!condition1 && condition2) {
                             divisionWithParentheses = createParentheses(unpackArray(equation[0][i - 1]), equation[0][i].charAt(indexSlash + 1));
 
                             //case 1: (b*b)/b(b)
                             if (condition_2) {
-                                equation[0].splice(i - 1, 2, divisionWithParentheses);
-                                equation[1].splice(i - 1, 2, true);
+                                spliceFormula = [i - 1, 2, divisionWithParentheses];
+                                spliceBoolean = [i - 1, 2, true];
                             //case 1: (b*b)/bb(b)
                             } else {
-                                equation[0].splice(i - 1, 2, divisionWithParentheses, equation[0][i].slice(2));
-                                equation[1].splice(i - 1, 2, true, false);
+                                spliceFormula = [i - 1, 2, divisionWithParentheses, equation[0][i].slice(2)];
+                                spliceBoolean = [i - 1, 2, true, false];
                             }
-
                         //case 3 (a*a)a/(a*a)
                         } else if (condition1 && !condition2) {
                             divisionWithParentheses = createParentheses(equation[0][i].charAt(indexSlash - 1), unpackArray(equation[0][i + 1]));
 
                             //case 1: (b*b)b/(b*b)
                             if (condition_1) {
-                                equation[0].splice(i, 2, divisionWithParentheses);
-                                equation[1].splice(i, 2, true);
+                                spliceFormula = [i, 2, divisionWithParentheses];
+                                spliceBoolean = [i, 2, true];
                             //case 2: (b*b)bb/(b*b)
                             } else {
-                                equation[0].splice(i, 2, equation[0][i].slice(0, indexSlash - 1), divisionWithParentheses);
-                                equation[1].splice(i, 2, false, true);
+                                spliceFormula = [i, 2, equation[0][i].slice(0, indexSlash - 1), divisionWithParentheses];
+                                spliceBoolean = [i, 2, false, true];
                             }
                         //case 2 (a*a)a/a(a*a)
                         } else if (!condition1 && !condition2) {
@@ -202,23 +212,30 @@ function integrate(func, variable, from, to) {
 
                             //case 1: (b*b)b/b(b*b)
                             if (condition_1 && condition_2) {
-                                equation[0].splice(i, 1, divisionWithParentheses);
-                                equation[1].splice(i, 1, true);
+                                spliceFormula = [i, 1, divisionWithParentheses];
+                                spliceBoolean = [i, 1, true];
                             //case 2: (b*b)bb/b(b*b)
                             } else if (!condition_1 && condition_2) {
-                                equation[0].splice(i, 1, equation[0][i].slice(0, indexSlash - 1), divisionWithParentheses);
-                                equation[1].splice(i, 1, false, true);
+                                spliceFormula = [i, 1, equation[0][i].slice(0, indexSlash - 1), divisionWithParentheses];
+                                spliceBoolean = [i, 1, false, true];
                             //case 3: (b*b)b/bb(b*b)
                             } else if (condition_1 && !condition_2) {
-                                equation[0].splice(i, 1, divisionWithParentheses, equation[0][i].slice(indexSlash + 2));
-                                equation[1].splice(i, 1, true, false);
+                                spliceFormula = [i, 1, divisionWithParentheses, equation[0][i].slice(indexSlash + 2)];
+                                spliceBoolean = [i, 1, true, false];
                             //case 4: (b*b)bb/bb(b*b)
                             } else if (!condition_1 && !condition_2) {
-                                equation[0].splice(i, 1, equation[0][i].slice(0, indexSlash - 1), divisionWithParentheses, equation[0][i].slice(indexSlash + 2));
-                                equation[1].splice(i, 1, false, true, false);
+                                spliceFormula = [i, 1, equation[0][i].slice(0, indexSlash - 1), divisionWithParentheses, equation[0][i].slice(indexSlash + 2)];
+                                spliceBoolean = [i, 1, false, true, false];
                             }
                         }
+                        equation = spliceMe.apply(equation, [spliceFormula, spliceBoolean]);
                         return equation;
+                    },
+                    separateBycircumflex = function (equation, i) {
+                        var indexPower = equation[0][i].indexOf('^');
+
+
+
                     };
                 return {
                     loopByParentheses: function (tmpArray) {
@@ -226,10 +243,15 @@ function integrate(func, variable, from, to) {
                             i = 0,
                             arrayEq = arrayEquation.split(''),
                             functionInArray = new ConvertArray(arrayEq),
-                            withoutParentheses;
-                        //console.log(functionInArray);
+                            withoutParentheses,
+                            power;
                         do {
                             if (functionInArray[1][i]) {
+                                power = findExponents(functionInArray[1][i]);
+                                if (power) {
+                                    separateBycircumflex(functionInArray, i, power);
+                                }
+                                separateBycircumflex(functionInArray, i);
                                 withoutParentheses = removeParentheses(functionInArray[0][i]);
                                 functionInArray[0][i] = [functionInArray[0][i], this.loopByParentheses(withoutParentheses)];
                             } else if (functionInArray[0][i].indexOf('/') !== -1) {

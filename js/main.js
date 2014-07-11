@@ -17,7 +17,7 @@ function checksubmit (){
 	var variable = document.getElementById("variable").value;
 	var from = document.getElementById("from").value;
 	var to = document.getElementById("to").value;
-	var result = integrate(tryeq, variable, from, to);
+	var result = functionIntegrate.integrateIndex(tryeq, variable, from, to);
 	document.getElementById('set').innerHTML=result;	
 }
 
